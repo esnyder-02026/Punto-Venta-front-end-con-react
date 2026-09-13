@@ -87,13 +87,13 @@ function Categorias() {
     };
 
     return (
-        <div>
-            <h2>Ingresar/Modificar Categorías</h2>
-            {mensaje && <p>{mensaje}</p>}
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="nombre">Nombre:</label>
-                    <input
+        <div className=" flex flex-col justify-center">
+            <h2 className="text-2xl font-bold text-center mb-4">Ingresa y Modificar Categorías</h2>
+            {mensaje && <p className=" text-center text-red-600 mb-4">{mensaje}</p>}
+            <form className="flex flex-col justify-center items-center gap-y-6"  onSubmit={handleSubmit}>
+                <div className=" ">
+                    <label className=" mx-4 font-bold" htmlFor="nombre">Nombre:</label>
+                    <input className=" border-1 rounded-lg outline-none" 
                         type="text"
                         id="nombre"
                         name="nombre"
@@ -102,8 +102,8 @@ function Categorias() {
                     />
                 </div>
                 <div>
-                    <label htmlFor="descripcion">Descripción:</label>
-                    <input
+                    <label className=" mx-4 font-bold " htmlFor="descripcion">Descripción:</label>
+                    <input className="border-1 border-black rounded-lg outline-none"
                         type="text"
                         id="descripcion"
                         name="descripcion"
@@ -111,31 +111,35 @@ function Categorias() {
                         onChange={handleChange}
                     />
                 </div>
-                <button type="submit">Guardar</button>
+                
+                <button className="border-1 border-black rounded-xl px-4 py-2 text-black bg-blue-600
+                text-white hover:scale-105 transition cursor-pointer" type="submit">Guardar</button>
             </form>
 
-            <h2>Listado de Categorías</h2>
+            <h2 className="my-6 text-2xl text-black text-center">Listado de Categorías</h2>
             <table>
-                <thead>
-                    <tr>
+                <thead className=" ">
+                    <tr className=" text-xl  ">
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Modificar</th>
                         <th>Eliminar</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className=" justify-center items-center text-center">
                     {categorias.map((categoria) => (
-                        <tr key={categoria.idCategoria}>
+                        <tr className="" key={categoria.idCategoria}>
                             <td>{categoria.nombre}</td>
                             <td>{categoria.descripcion}</td>
                             <td>
-                                <button onClick={() => handleModificar(categoria)}>
+                                <button className="border-1 border-black rounded-xl px-4 py-2 text-black bg-orange-600
+                text-white hover:scale-105 transition cursor-pointer my-2" onClick={() => handleModificar(categoria)}>
                                     Modificar
                                 </button>
                             </td>
-                            <td>
-                                <button onClick={() => handleAnular(categoria.idCategoria)}>
+                            <td className="">
+                                <button className="border-1 border-black rounded-xl px-4 py-2 text-black bg-red-800
+                text-white hover:scale-105 transition cursor-pointer my-2" onClick={() => handleAnular(categoria.idCategoria)}>
                                     Eliminar
                                 </button>
                             </td>

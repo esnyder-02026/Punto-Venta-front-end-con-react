@@ -15,6 +15,7 @@ const formInicial = {
     telefono: ""
 };
 
+// Función para extraer el mensaje de error de Axios o JavaScript
 const obtenerMensajeError = (error) => {
     if (axios.isAxiosError(error)) {
         return error.response?.data?.mensaje ?? error.message;
@@ -50,6 +51,11 @@ function Clientes() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleCancelarEdicion = () => {
+        setForm(formInicial);
+        setModoEdicion(false);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -59,7 +65,7 @@ function Clientes() {
             } else {
                 respuesta = await crearCliente(form);
             }
-            setMensaje(respuesta.data.mensaje);
+            setMensaje(respuesta.data.mensaje || "Operación realizada con éxito");
             setForm(formInicial);
             setModoEdicion(false);
             cargarClientes();
@@ -79,6 +85,7 @@ function Clientes() {
         if (!confirmar) return;
         try {
             await anularCliente(idCliente);
+            setMensaje("Cliente anulado correctamente");
             cargarClientes();
         } catch (error) {
             console.error("Error al anular el cliente", error);
@@ -87,33 +94,44 @@ function Clientes() {
     };
 
     return (
-        <div>
-            <h2>Ingresar/Modificar Clientes</h2>
-            {mensaje && <p>{mensaje}</p>}
-            <form onSubmit={handleSubmit}>
+        <div className="flex flex-col justify-center">
+            <h2 className="text-2xl font-bold text-center mb-4">
+                {modoEdicion ? "Modificar Cliente" : "Ingresar Clientes"}
+            </h2>
+
+            {mensaje && <p className="text-center text-red-600 mb-4">{mensaje}</p>}
+
+            <form className="flex flex-col justify-center items-center gap-y-4" onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="nombre">Nombre:</label>
+                    <label className="mx-4 font-bold" htmlFor="nombre">Nombre:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="text"
                         id="nombre"
                         name="nombre"
                         value={form.nombre}
                         onChange={handleChange}
+                        required
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="apellido">Apellido:</label>
+                    <label className="mx-4 font-bold" htmlFor="apellido">Apellido:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="text"
                         id="apellido"
                         name="apellido"
                         value={form.apellido}
                         onChange={handleChange}
+                        required
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="email">Email:</label>
+                    <label className="mx-4 font-bold" htmlFor="email">Email:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="email"
                         id="email"
                         name="email"
@@ -121,9 +139,11 @@ function Clientes() {
                         onChange={handleChange}
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="telefono">Teléfono:</label>
+                    <label className="mx-4 font-bold" htmlFor="telefono">Teléfono:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="text"
                         id="telefono"
                         name="telefono"
@@ -131,13 +151,32 @@ function Clientes() {
                         onChange={handleChange}
                     />
                 </div>
-                <button type="submit">Guardar</button>
+
+                <div className="flex gap-x-4">
+                    <button
+                        className="border-1 border-black rounded-xl px-4 py-2 bg-blue-600 text-white hover:scale-105 transition cursor-pointer"
+                        type="submit"
+                    >
+                        {modoEdicion ? "Actualizar" : "Guardar"}
+                    </button>
+
+                    {modoEdicion && (
+                        <button
+                            type="button"
+                            onClick={handleCancelarEdicion}
+                            className="border-1 border-black rounded-xl px-4 py-2 bg-gray-600 text-white hover:scale-105 transition cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                    )}
+                </div>
             </form>
 
-            <h2>Listado de Clientes</h2>
-            <table>
+            <h2 className="my-6 text-2xl text-black text-center">Listado de Clientes</h2>
+
+            <table className="w-full border-collapse">
                 <thead>
-                    <tr>
+                    <tr className="text-xl">
                         <th>Nombre</th>
                         <th>Apellido</th>
                         <th>Email</th>
@@ -146,18 +185,28 @@ function Clientes() {
                         <th>Eliminar</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="justify-center items-center text-center">
                     {clientes.map((cliente) => (
                         <tr key={cliente.idCliente}>
                             <td>{cliente.nombre}</td>
                             <td>{cliente.apellido}</td>
-                            <td>{cliente.email}</td>
-                            <td>{cliente.telefono}</td>
+                            <td>{cliente.email || "-"}</td>
+                            <td>{cliente.telefono || "-"}</td>
                             <td>
-                                <button onClick={() => handleModificar(cliente)}>Modificar</button>
+                                <button
+                                    className="border-1 border-black rounded-xl px-4 py-2 bg-orange-600 text-white hover:scale-105 transition cursor-pointer my-2"
+                                    onClick={() => handleModificar(cliente)}
+                                >
+                                    Modificar
+                                </button>
                             </td>
                             <td>
-                                <button onClick={() => handleAnular(cliente.idCliente)}>Eliminar</button>
+                                <button
+                                    className="border-1 border-black rounded-xl px-4 py-2 bg-red-800 text-white hover:scale-105 transition cursor-pointer my-2"
+                                    onClick={() => handleAnular(cliente.idCliente)}
+                                >
+                                    Eliminar
+                                </button>
                             </td>
                         </tr>
                     ))}

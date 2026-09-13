@@ -55,6 +55,11 @@ function Productos() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleCancelarEdicion = () => {
+        setForm(formInicial);
+        setModoEdicion(false);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -64,7 +69,7 @@ function Productos() {
             } else {
                 respuesta = await crearProducto(form);
             }
-            setMensaje(respuesta.data.mensaje);
+            setMensaje(respuesta.data.mensaje || "Operación realizada con éxito");
             setForm(formInicial);
             setModoEdicion(false);
             cargarDatos();
@@ -84,6 +89,7 @@ function Productos() {
         if (!confirmar) return;
         try {
             await anularProducto(idProducto);
+            setMensaje("Producto anulado correctamente");
             cargarDatos();
         } catch (error) {
             console.error("Error al anular el producto", error);
@@ -92,23 +98,31 @@ function Productos() {
     };
 
     return (
-        <div>
-            <h2>Ingresar/Modificar Productos</h2>
-            {mensaje && <p>{mensaje}</p>}
-            <form onSubmit={handleSubmit}>
+        <div className="flex flex-col justify-center">
+            <h2 className="text-2xl font-bold text-center mb-4">
+                {modoEdicion ? "Modificar Producto" : "Ingresa y Modificar Productos"}
+            </h2>
+
+            {mensaje && <p className="text-center text-red-600 mb-4">{mensaje}</p>}
+
+            <form className="flex flex-col justify-center items-center gap-y-6" onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="nombre">Nombre:</label>
+                    <label className="mx-4 font-bold" htmlFor="nombre">Nombre:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="text"
                         id="nombre"
                         name="nombre"
                         value={form.nombre}
                         onChange={handleChange}
+                        required
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="descripcion">Descripción:</label>
+                    <label className="mx-4 font-bold" htmlFor="descripcion">Descripción:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="text"
                         id="descripcion"
                         name="descripcion"
@@ -116,34 +130,43 @@ function Productos() {
                         onChange={handleChange}
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="precio">Precio:</label>
+                    <label className="mx-4 font-bold" htmlFor="precio">Precio:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="number"
                         step="0.01"
                         id="precio"
                         name="precio"
                         value={form.precio}
                         onChange={handleChange}
+                        required
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="stock">Stock:</label>
+                    <label className="mx-4 font-bold" htmlFor="stock">Stock:</label>
                     <input
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1"
                         type="number"
                         id="stock"
                         name="stock"
                         value={form.stock}
                         onChange={handleChange}
+                        required
                     />
                 </div>
+
                 <div>
-                    <label htmlFor="idCategoria">Categoría:</label>
+                    <label className="mx-4 font-bold" htmlFor="idCategoria">Categoría:</label>
                     <select
+                        className="border-1 border-black rounded-lg outline-none px-2 py-1 bg-white"
                         id="idCategoria"
                         name="idCategoria"
                         value={form.idCategoria}
                         onChange={handleChange}
+                        required
                     >
                         <option value="">Seleccione una categoría</option>
                         {categorias.map((cat) => (
@@ -153,13 +176,32 @@ function Productos() {
                         ))}
                     </select>
                 </div>
-                <button type="submit">Guardar</button>
+
+                <div className="flex gap-x-4">
+                    <button
+                        className="border-1 border-black rounded-xl px-4 py-2 bg-blue-600 text-white hover:scale-105 transition cursor-pointer"
+                        type="submit"
+                    >
+                        {modoEdicion ? "Actualizar" : "Guardar"}
+                    </button>
+
+                    {modoEdicion && (
+                        <button
+                            type="button"
+                            onClick={handleCancelarEdicion}
+                            className="border-1 border-black rounded-xl px-4 py-2 bg-gray-600 text-white hover:scale-105 transition cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                    )}
+                </div>
             </form>
 
-            <h2>Listado de Productos</h2>
-            <table>
+            <h2 className="my-6 text-2xl text-black text-center">Listado de Productos</h2>
+
+            <table className="w-full border-collapse">
                 <thead>
-                    <tr>
+                    <tr className="text-xl">
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Precio</th>
@@ -168,18 +210,28 @@ function Productos() {
                         <th>Eliminar</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="justify-center items-center text-center">
                     {productos.map((prod) => (
                         <tr key={prod.idProducto}>
                             <td>{prod.nombre}</td>
                             <td>{prod.descripcion}</td>
-                            <td>{prod.precio}</td>
+                            <td>Q{prod.precio}</td>
                             <td>{prod.stock}</td>
                             <td>
-                                <button onClick={() => handleModificar(prod)}>Modificar</button>
+                                <button
+                                    className="border-1 border-black rounded-xl px-4 py-2 bg-orange-600 text-white hover:scale-105 transition cursor-pointer my-2"
+                                    onClick={() => handleModificar(prod)}
+                                >
+                                    Modificar
+                                </button>
                             </td>
                             <td>
-                                <button onClick={() => handleAnular(prod.idProducto)}>Eliminar</button>
+                                <button
+                                    className="border-1 border-black rounded-xl px-4 py-2 bg-red-800 text-white hover:scale-105 transition cursor-pointer my-2"
+                                    onClick={() => handleAnular(prod.idProducto)}
+                                >
+                                    Eliminar
+                                </button>
                             </td>
                         </tr>
                     ))}
