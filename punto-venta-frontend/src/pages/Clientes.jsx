@@ -35,7 +35,7 @@ function Clientes() {
     const cargarClientes = async () => {
         try {
             const respuesta = await listarClientesActivos();
-            setClientes(respuesta.data);
+            setClientes(respuesta.data || []);
         } catch (error) {
             console.error("Error al listar clientes", error);
             setMensaje(obtenerMensajeError(error));
@@ -59,16 +59,28 @@ function Clientes() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Estructura adaptada al ClienteDTO exigido por Spring Boot
+            const payload = {
+                idCliente: form.idCliente,
+                nombre: form.nombre,
+                apellido: form.apellido,
+                email: form.email,
+                telefono: form.telefono,
+                telefono33: form.telefono, // Soporte para sufijo 33
+                estado: true // Garantiza que se guarde activo en la BD
+            };
+
             let respuesta;
             if (modoEdicion) {
-                respuesta = await actualizarCliente(form.idCliente, form);
+                respuesta = await actualizarCliente(form.idCliente, payload);
             } else {
-                respuesta = await crearCliente(form);
+                respuesta = await crearCliente(payload);
             }
-            setMensaje(respuesta.data.mensaje || "Operación realizada con éxito");
+
+            setMensaje(respuesta.data?.mensaje || "Operación realizada con éxito");
             setForm(formInicial);
             setModoEdicion(false);
-            cargarClientes();
+            cargarClientes(); // Recarga la lista inmediatamente
         } catch (error) {
             console.error("Error al guardar cliente", error);
             setMensaje(obtenerMensajeError(error));
@@ -76,16 +88,24 @@ function Clientes() {
     };
 
     const handleModificar = (cliente) => {
-        setForm(cliente);
+        setForm({
+            idCliente: cliente.idCliente,
+            nombre: cliente.nombre,
+            apellido: cliente.apellido,
+            email: cliente.email || "",
+            telefono: cliente.telefono || cliente.telefono33 || ""
+        });
         setModoEdicion(true);
     };
 
-    const handleAnular = async (idCliente) => {
+    const handleAnular = async (cliente) => {
         const confirmar = window.confirm("¿Seguro que deseas anular este cliente?");
         if (!confirmar) return;
         try {
-            await anularCliente(idCliente);
-            setMensaje("Cliente anulado correctamente");
+            // Se envía el objeto del cliente con estado: false para cumplir con @RequestBody ClienteDTO
+            const payload = { ...cliente, estado: false };
+            const respuesta = await anularCliente(cliente.idCliente, payload);
+            setMensaje(respuesta.data?.mensaje || "Cliente anulado con éxito");
             cargarClientes();
         } catch (error) {
             console.error("Error al anular el cliente", error);
@@ -191,7 +211,7 @@ function Clientes() {
                             <td>{cliente.nombre}</td>
                             <td>{cliente.apellido}</td>
                             <td>{cliente.email || "-"}</td>
-                            <td>{cliente.telefono || "-"}</td>
+                            <td>{cliente.telefono || cliente.telefono33 || "-"}</td>
                             <td>
                                 <button
                                     className="border-1 border-black rounded-xl px-4 py-2 bg-orange-600 text-white hover:scale-105 transition cursor-pointer my-2"
@@ -203,7 +223,7 @@ function Clientes() {
                             <td>
                                 <button
                                     className="border-1 border-black rounded-xl px-4 py-2 bg-red-800 text-white hover:scale-105 transition cursor-pointer my-2"
-                                    onClick={() => handleAnular(cliente.idCliente)}
+                                    onClick={() => handleAnular(cliente)}
                                 >
                                     Eliminar
                                 </button>

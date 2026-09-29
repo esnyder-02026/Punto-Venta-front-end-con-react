@@ -37,9 +37,10 @@ function Productos() {
     const cargarDatos = async () => {
         try {
             const resProd = await listarProductosActivos();
-            setProductos(resProd.data);
+            setProductos(resProd.data || []);
+
             const resCat = await listarCategoriasActivas();
-            setCategorias(resCat.data);
+            setCategorias(resCat.data || []);
         } catch (error) {
             console.error("Error al cargar datos", error);
             setMensaje(obtenerMensajeError(error));
@@ -63,13 +64,27 @@ function Productos() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            let respuesta;
+            const idCatNum = parseInt(form.idCategoria, 10);
+
+            // Estructura de datos alineada con ProductoDTO
+            const payload = {
+                idProducto: form.idProducto,
+                nombre: form.nombre,
+                descripcion: form.descripcion,
+                precio: parseFloat(form.precio) || 0,
+                stock: parseInt(form.stock, 10) || 0,
+                idCategoria: idCatNum
+            };
+
             if (modoEdicion) {
-                respuesta = await actualizarProducto(form.idProducto, form);
+                const respuesta = await actualizarProducto(form.idProducto, payload);
+                setMensaje(respuesta.data?.mensaje || "Producto actualizado con éxito");
             } else {
-                respuesta = await crearProducto(form);
+                // Tu controller en Spring Boot responde con el DTO creado
+                await crearProducto(payload);
+                setMensaje("Producto creado con éxito");
             }
-            setMensaje(respuesta.data.mensaje || "Operación realizada con éxito");
+
             setForm(formInicial);
             setModoEdicion(false);
             cargarDatos();
@@ -80,16 +95,25 @@ function Productos() {
     };
 
     const handleModificar = (producto) => {
-        setForm(producto);
+        setForm({
+            idProducto: producto.idProducto,
+            nombre: producto.nombre,
+            descripcion: producto.descripcion || "",
+            precio: producto.precio,
+            stock: producto.stock,
+            idCategoria: producto.idCategoria || ""
+        });
         setModoEdicion(true);
     };
 
-    const handleAnular = async (idProducto) => {
+    const handleAnular = async (producto) => {
         const confirmar = window.confirm("¿Seguro que deseas anular este producto?");
         if (!confirmar) return;
         try {
-            await anularProducto(idProducto);
-            setMensaje("Producto anulado correctamente");
+            // Se envía el objeto del producto marcando estado false para cumplir con @RequestBody
+            const payload = { ...producto, estado: false };
+            const respuesta = await anularProducto(producto.idProducto, payload);
+            setMensaje(respuesta.data?.mensaje || "Producto anulado con éxito");
             cargarDatos();
         } catch (error) {
             console.error("Error al anular el producto", error);
@@ -214,7 +238,7 @@ function Productos() {
                     {productos.map((prod) => (
                         <tr key={prod.idProducto}>
                             <td>{prod.nombre}</td>
-                            <td>{prod.descripcion}</td>
+                            <td>{prod.descripcion || "-"}</td>
                             <td>Q{prod.precio}</td>
                             <td>{prod.stock}</td>
                             <td>
@@ -228,7 +252,7 @@ function Productos() {
                             <td>
                                 <button
                                     className="border-1 border-black rounded-xl px-4 py-2 bg-red-800 text-white hover:scale-105 transition cursor-pointer my-2"
-                                    onClick={() => handleAnular(prod.idProducto)}
+                                    onClick={() => handleAnular(prod)}
                                 >
                                     Eliminar
                                 </button>
