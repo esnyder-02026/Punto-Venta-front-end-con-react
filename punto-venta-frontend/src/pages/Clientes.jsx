@@ -1,3 +1,6 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import ExcelJS from "exceljs";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -33,14 +36,17 @@ function Clientes() {
     const [mensaje, setMensaje] = useState("");
 
     const cargarClientes = async () => {
-        try {
-            const respuesta = await listarClientesActivos();
-            setClientes(respuesta.data || []);
-        } catch (error) {
-            console.error("Error al listar clientes", error);
-            setMensaje(obtenerMensajeError(error));
-        }
-    };
+    try {
+        const respuesta = await listarClientesActivos();
+        
+        // Se invierte el arreglo devuelto por la API para que los elementos más recientes aparezcan al inicio
+        const datosInvertidos = (respuesta.data || []).reverse();
+        setClientes(datosInvertidos);
+    } catch (error) {
+        console.error("Error al listar clientes", error);
+        setMensaje(obtenerMensajeError(error));
+    }
+};
 
     useEffect(() => {
         cargarClientes();
@@ -111,6 +117,74 @@ function Clientes() {
             console.error("Error al anular el cliente", error);
             setMensaje(obtenerMensajeError(error));
         }
+    };
+    
+
+    const generarPDFClientes = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Listado de Clientes", 14, 15);
+        doc.setFontSize(10);
+        doc.text("Fecha: " + new Date().toLocaleDateString(), 14, 22);
+
+        const columnas = ["Nombre", "Apellido", "Email", "Teléfono"];
+        const filas = clientes.map((cli) => [
+            cli.nombre,
+            cli.apellido,
+            cli.email || "-",
+            cli.telefono || cli.telefono33 || "-"
+        ]);
+
+        autoTable(doc, {
+            head: [columnas],
+            body: filas,
+            startY: 26,
+            headStyles: { fillColor: [30, 58, 138] }
+        });
+
+        return doc;
+    };
+
+    const verPDFClientes = () => {
+        const url = generarPDFClientes().output("bloburl");
+        window.open(url, "_blank");
+    };
+
+    const descargarPDFClientes = () => {
+        generarPDFClientes().save("reporte_clientes.pdf");
+    };
+
+    const exportarExcelClientes = async () => {
+        const libro = new ExcelJS.Workbook();
+        const hoja = libro.addWorksheet("Clientes");
+
+        hoja.addRow(["Listado de Clientes"]).font = { size: 16, bold: true };
+        hoja.addRow(["Fecha: " + new Date().toLocaleDateString()]);
+        hoja.addRow([]);
+
+        const encabezado = hoja.addRow(["Nombre", "Apellido", "Email", "Teléfono"]);
+        encabezado.eachCell((celda) => {
+            celda.font = { bold: true, color: { argb: "FFFFFFFF" } };
+            celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A8A" } };
+        });
+
+        clientes.forEach((cli) => {
+            hoja.addRow([cli.nombre, cli.apellido, cli.email || "-", cli.telefono || cli.telefono33 || "-"]);
+        });
+
+        hoja.getColumn(1).width = 25;
+        hoja.getColumn(2).width = 25;
+        hoja.getColumn(3).width = 35;
+        hoja.getColumn(4).width = 20;
+
+        const buffer = await libro.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = "reporte_clientes.xlsx";
+        enlace.click();
+        URL.revokeObjectURL(url);
     };
 
     return (
@@ -190,6 +264,19 @@ function Clientes() {
                         </button>
                     )}
                 </div>
+
+                <div className="flex justify-center gap-4 my-4">
+                    <button onClick={verPDFClientes} className="border-1 border-black rounded-xl px-4 py-2 bg-sky-600 text-white hover:scale-105 transition cursor-pointer">
+                        Ver en PDF
+                    </button>
+                    <button onClick={descargarPDFClientes} className="border-1 border-black rounded-xl px-4 py-2 bg-red-600 text-white hover:scale-105 transition cursor-pointer">
+                        Descargar PDF
+                    </button>
+                    <button onClick={exportarExcelClientes} className="border-1 border-black rounded-xl px-4 py-2 bg-green-600 text-white hover:scale-105 transition cursor-pointer">
+                        Descargar Excel
+                    </button>
+                </div>
+
             </form>
 
             <h2 className="my-6 text-2xl text-black text-center">Listado de Clientes</h2>

@@ -1,3 +1,6 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import ExcelJS from "exceljs";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -37,7 +40,10 @@ function Productos() {
     const cargarDatos = async () => {
         try {
             const resProd = await listarProductosActivos();
-            setProductos(resProd.data || []);
+            
+            // Invierte el arreglo para que el último producto creado aparezca de primero
+            const listaInvertida = [...(resProd.data || [])].reverse();
+            setProductos(listaInvertida);
 
             const resCat = await listarCategoriasActivas();
             setCategorias(resCat.data || []);
@@ -119,6 +125,73 @@ function Productos() {
             console.error("Error al anular el producto", error);
             setMensaje(obtenerMensajeError(error));
         }
+    };
+
+    const generarPDFProductos = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Listado de Productos", 14, 15);
+        doc.setFontSize(10);
+        doc.text("Fecha: " + new Date().toLocaleDateString(), 14, 22);
+
+        const columnas = ["Nombre", "Descripción", "Precio", "Stock"];
+        const filas = productos.map((prod) => [
+            prod.nombre,
+            prod.descripcion || "-",
+            `Q${prod.precio}`,
+            prod.stock
+        ]);
+
+        autoTable(doc, {
+            head: [columnas],
+            body: filas,
+            startY: 26,
+            headStyles: { fillColor: [180, 83, 9] }
+        });
+
+        return doc;
+    };
+
+    const verPDFProductos = () => {
+        const url = generarPDFProductos().output("bloburl");
+        window.open(url, "_blank");
+    };
+
+    const descargarPDFProductos = () => {
+        generarPDFProductos().save("reporte_productos.pdf");
+    };
+
+    const exportarExcelProductos = async () => {
+        const libro = new ExcelJS.Workbook();
+        const hoja = libro.addWorksheet("Productos");
+
+        hoja.addRow(["Listado de Productos"]).font = { size: 16, bold: true };
+        hoja.addRow(["Fecha: " + new Date().toLocaleDateString()]);
+        hoja.addRow([]);
+
+        const encabezado = hoja.addRow(["Nombre", "Descripción", "Precio", "Stock"]);
+        encabezado.eachCell((celda) => {
+            celda.font = { bold: true, color: { argb: "FFFFFFFF" } };
+            celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFB45309" } };
+        });
+
+        productos.forEach((prod) => {
+            hoja.addRow([prod.nombre, prod.descripcion || "-", prod.precio, prod.stock]);
+        });
+
+        hoja.getColumn(1).width = 30;
+        hoja.getColumn(2).width = 40;
+        hoja.getColumn(3).width = 15;
+        hoja.getColumn(4).width = 15;
+
+        const buffer = await libro.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = "reporte_productos.xlsx";
+        enlace.click();
+        URL.revokeObjectURL(url);
     };
 
     return (
@@ -219,6 +292,19 @@ function Productos() {
                         </button>
                     )}
                 </div>
+
+                <div className="flex justify-center gap-4 my-4">
+                    <button onClick={verPDFProductos} className="border-1 border-black rounded-xl px-4 py-2 bg-sky-600 text-white hover:scale-105 transition cursor-pointer">
+                        Ver en PDF
+                    </button>
+                    <button onClick={descargarPDFProductos} className="border-1 border-black rounded-xl px-4 py-2 bg-red-600 text-white hover:scale-105 transition cursor-pointer">
+                        Descargar PDF
+                    </button>
+                    <button onClick={exportarExcelProductos} className="border-1 border-black rounded-xl px-4 py-2 bg-green-600 text-white hover:scale-105 transition cursor-pointer">
+                        Descargar Excel
+                    </button>
+                </div>
+
             </form>
 
             <h2 className="my-6 text-2xl text-black text-center">Listado de Productos</h2>
