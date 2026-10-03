@@ -2,6 +2,7 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 import Categorias from "./pages/Categorias";
 import Clientes from "./pages/Clientes";
 import Productos from "./pages/Productos";
+import Reportes from "./pages/Reportes"; // Importación del nuevo componente de reportes
 
 function App() {
   const location = useLocation();
@@ -34,6 +35,9 @@ function App() {
             <Link to="/productos" className={getLinkClass("/productos")}>
               Productos
             </Link>
+            <Link to="/reportes" className={getLinkClass("/reportes")}>
+              Reportes
+            </Link>
           </nav>
         </div>
       </header>
@@ -44,6 +48,7 @@ function App() {
           <Route path="/categorias" element={<Categorias />} />
           <Route path="/clientes" element={<Clientes />} />
           <Route path="/productos" element={<Productos />} />
+          <Route path="/reportes" element={<Reportes />} />
           <Route path="/" element={<Categorias />} />
         </Routes>
       </main>
