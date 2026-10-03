@@ -222,7 +222,7 @@ function Reportes() {
                     />
                     <button
                         onClick={ejecutarFiltroCategorias}
-                        className="border-1 border-black rounded-xl px-4 py-2 bg-indigo-600 text-white hover:scale-105 transition cursor-pointer"
+                        className="border-1 border-black rounded-xl px-4 py-2 bg-purple-600 text-white hover:scale-105 transition cursor-pointer"
                     >
                         Descargar PDF
                     </button>
@@ -241,7 +241,7 @@ function Reportes() {
                     />
                     <button
                         onClick={ejecutarFiltroProductos}
-                        className="border-1 border-black rounded-xl px-4 py-2 bg-indigo-600 text-white hover:scale-105 transition cursor-pointer"
+                        className="border-1 border-black rounded-xl px-4 py-2 bg-purple-600 text-white hover:scale-105 transition cursor-pointer"
                     >
                         Descargar PDF
                     </button>
